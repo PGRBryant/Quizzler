@@ -11,6 +11,7 @@ import Foundation
 class QuestionBank {
     
     var list = [Question]()
+    let maxNumQuestions = 30
     
     init() {
     
@@ -51,12 +52,12 @@ class QuestionBank {
     }
     
     func edit(size: Int) {
+        list.shuffle() //shuffle the order everytime
+        
         if list.count > size { //lazily handle any size inputted larger than max
             let numToRemove = list.count - size
             list.removeLast(numToRemove)
         }
-        
-        list.shuffle() //shuffle the order everytime
     }
 }
 
