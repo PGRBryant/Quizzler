@@ -14,7 +14,7 @@ class ViewController: UIViewController {
     var allQuestions: QuestionBank = QuestionBank()
     var pickedAnswer : String = "" //need to give it an initial value
     var currentQuestion: Question = Question(text: "Welcome to the Quiz app!", answers: [], correctAnswer: "")//track which question you're on... this should probably be in the questionBank, actually...
-    var numQuestionsInBank: Int = 7 //Initial value, s/b changeable whenever
+    var numQuestionsInBank: Int = 5 //Initial value, s/b changeable whenever
     var score: Int = 0 //taking care of "score" elements in ViewController is actually kinda bad
     
     //victory particles
@@ -41,21 +41,19 @@ class ViewController: UIViewController {
     
     @IBOutlet var buttons: [UIButton]! //whole collection
     
+    //in order to fix the awkwardly misshappen progressBar on first load, have to force its initial size like this-->
+    override func viewWillLayoutSubviews() {
+        progressBar.frame.size.width = view.frame.size.width * CGFloat (1.0 / Double(numQuestionsInBank))
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         allQuestions.edit(size: numQuestionsInBank) //could have a "setting" page to handle this kind of information
         nextQuestion()
     }
 
 
     @IBAction func answerPressed(_ sender: AnyObject) {
-//        if sender.tag == 1 { //this means they pressed True
-//            pickedAnswer = "True"
-//        } else if sender.tag == 2 { //only one other tag, for now?
-//            pickedAnswer = "False"
-//        }
-        
         if let buttonTitle = sender.title(for: .normal) {
             pickedAnswer = buttonTitle
         }
@@ -67,9 +65,12 @@ class ViewController: UIViewController {
     func updateUI() {
         questionLabel.text = currentQuestion.questionText
         scoreLabel.text = "Score: \(score)"
+        
         let currentQuestionNum = numQuestionsInBank - allQuestions.list.count
         progressLabel.text = "\(currentQuestionNum)/\(numQuestionsInBank)"
-        progressBar.frame.size.width = (view.frame.size.width / CGFloat(numQuestionsInBank)) * CGFloat(currentQuestionNum)
+        
+        let ratio = CGFloat(Double(currentQuestionNum) / Double(numQuestionsInBank))
+        progressBar.frame.size.width = view.frame.size.width * ratio
         
         //first show all buttons with correct title, then hide the rest of the buttons
         if let answers = currentQuestion.answers {
@@ -256,7 +257,8 @@ class ViewController: UIViewController {
         
         let image = UIImage(named: "particle")?.cgImage
         
-        fireworkEmitter.emitterPosition = CGPoint(x: self.view.bounds.size.width/2, y:20)
+        fireworkEmitter.emitterPosition = CGPoint(x: self.view.bounds.size.width/2,
+                                                  y: self.view.bounds.size.height)
         fireworkEmitter.renderMode = kCAEmitterLayerAdditive
         
         let emitCel = makeEmitterCellsForFireworks()
@@ -273,10 +275,10 @@ class ViewController: UIViewController {
         emitterCell.emissionLatitude = 0
         emitterCell.lifetime = 2.6
         emitterCell.birthRate = 6
-        emitterCell.velocity = 300
+        emitterCell.velocity = -550
         emitterCell.velocityRange = 100
         emitterCell.yAcceleration = 150
-        emitterCell.emissionRange = CGFloat(Double.pi / 4.0)
+        emitterCell.emissionRange = CGFloat(Double.pi / 6.0)
         let newColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 0.5).cgColor
         emitterCell.color = newColor
         
@@ -293,10 +295,10 @@ class ViewController: UIViewController {
         flareCell.contents = img
         flareCell.emissionLongitude = CGFloat(2.0 * Double.pi)
         flareCell.scale = 0.4
-        flareCell.velocity = 80
+        flareCell.velocity = -80
         flareCell.birthRate = 45
         flareCell.lifetime = 0.5
-        flareCell.yAcceleration = -350
+        flareCell.yAcceleration = 350
         flareCell.emissionRange = CGFloat(Double.pi / 7)
         flareCell.alphaSpeed = -0.7
         flareCell.scaleSpeed = -0.1
@@ -313,10 +315,10 @@ class ViewController: UIViewController {
         fireworkCell.contents = img
         fireworkCell.birthRate = 19999
         fireworkCell.scale = 0.6
-        fireworkCell.velocity = 130
+        fireworkCell.velocity = -130
         fireworkCell.lifetime = 100
         fireworkCell.alphaSpeed = -0.2
-        fireworkCell.yAcceleration = -80
+        fireworkCell.yAcceleration = 80
         fireworkCell.beginTime = 1.5
         fireworkCell.duration = 0.1
         fireworkCell.emissionRange = 2 * CGFloat.pi
