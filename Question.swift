@@ -11,17 +11,16 @@ import Foundation
 class Question {
     
     let questionText : String
-    let answer : Bool
+    let correctAnswer : String
+    let answers : [String]?
     //we could add a variable to track the number of times we answered this correctly, if we wanted
     //Or another variable with information ABOUT the question so we could store interesting tidbits
     
-    init(text: String, correctAnswer: Bool) {
+    init(text: String, answers: [String], correctAnswer: String) {
         questionText = text
-        answer = correctAnswer
+        self.correctAnswer = correctAnswer
+        self.answers = answers
     }
-    
-    
-    
 }
 
 
