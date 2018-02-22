@@ -11,11 +11,12 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var allQuestions: QuestionBank = QuestionBank()
+    var allQuestions: QuestionBank?
     var pickedAnswer : String = "" //need to give it an initial value
-    var currentQuestion: Question = Question(text: "Welcome to the Quiz app!", answers: [], correctAnswer: "")//track which question you're on... this should probably be in the questionBank, actually...
+    var currentQuestion: Question? //track which question you're on... this should probably be in the questionBank, actually...
     var numQuestionsInBank: Int = 5 //Initial value, s/b changeable whenever
     var score: Int = 0 //taking care of "score" elements in ViewController is actually kinda bad
+    var maxScore: Int = 0
     
     //victory particles
 //    var rootLayer = CALayer()
@@ -43,12 +44,17 @@ class ViewController: UIViewController {
     
     //in order to fix the awkwardly misshappen progressBar on first load, have to force its initial size like this-->
     override func viewWillLayoutSubviews() {
-        progressBar.frame.size.width = view.frame.size.width * CGFloat (1.0 / Double(numQuestionsInBank))
+        let currentQuestionNum = numQuestionsInBank - allQuestions!.list.count
+        if progressBar.frame.size.width == CGFloat(24) && currentQuestionNum < 2 {
+            progressBar.frame.size.width = view.frame.size.width * CGFloat (1.0 / Double(numQuestionsInBank))
+        }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        allQuestions.edit(size: numQuestionsInBank) //could have a "setting" page to handle this kind of information
+        allQuestions = QuestionBank()
+        allQuestions!.edit(size: numQuestionsInBank)
+        setMaxScore()
         nextQuestion()
     }
 
@@ -63,17 +69,17 @@ class ViewController: UIViewController {
     
     //this should be called to update the score, the question, whatevs.
     func updateUI() {
-        questionLabel.text = currentQuestion.questionText
+        questionLabel.text = currentQuestion!.questionText
         scoreLabel.text = "Score: \(score)"
         
-        let currentQuestionNum = numQuestionsInBank - allQuestions.list.count
+        let currentQuestionNum = numQuestionsInBank - allQuestions!.list.count
         progressLabel.text = "\(currentQuestionNum)/\(numQuestionsInBank)"
         
         let ratio = CGFloat(Double(currentQuestionNum) / Double(numQuestionsInBank))
         progressBar.frame.size.width = view.frame.size.width * ratio
         
         //first show all buttons with correct title, then hide the rest of the buttons
-        if let answers = currentQuestion.answers {
+        if let answers = currentQuestion!.answers {
             for index in 0..<answers.count {
                 buttons[index].setTitle(answers[index], for: .normal)
                 buttons[index].alpha = 1
@@ -89,8 +95,8 @@ class ViewController: UIViewController {
     //handle the "end of quiz" situation here
     func nextQuestion() {
         //next question logic
-        if allQuestions.list.count > 0 {
-            self.currentQuestion = allQuestions.list.popLast()!
+        if allQuestions!.list.count > 0 {
+            self.currentQuestion = allQuestions!.list.popLast()!
             updateUI()
         } else {
             //if we're done with the quiz, then...
@@ -100,7 +106,7 @@ class ViewController: UIViewController {
             if didGetMaxPossibleScore() {
                 self.createFireworks()
                 alertTitle = "AMAZING!!"
-                alertMsg = "You've finished all the questions! And got a PERFCT score of \(score)! Enjoy the fireworks!"
+                alertMsg = "You've finished all the questions! And got a PERFECT score of \(score)! Enjoy the fireworks!"
             }
             else {
                 self.createParticles()
@@ -124,21 +130,12 @@ class ViewController: UIViewController {
         }
     }
     
-    //Show/Hide UI
-    func showUI() {
-        //set everything's alpha to 1
-    }
-    
-    func hideUI() {
-        //set everything's alpha to 0
-    }
-    
-    
     //here we should update the score, including if we want to restart the score on each repeat
     func checkAnswer() {
-        if currentQuestion.correctAnswer == pickedAnswer {
+        if currentQuestion!.correctAnswer == pickedAnswer {
             ProgressHUD.showSuccess("Correct!")
             score = score + 1 + streakLength*streakMultiplier
+            print(score)
             streakLength = streakLength + 1
         } else {
             ProgressHUD.showError("Wrong")
@@ -154,8 +151,13 @@ class ViewController: UIViewController {
         else { particleEmitter.removeFromSuperlayer() }
         
         score = 0
+        streakLength = 0
         allQuestions = QuestionBank() //init a new one -- lazy, but this way it rebuilds each time
+        self.allQuestions!.edit(size: self.numQuestionsInBank)
+        self.nextQuestion()
         
+//        setMaxScore() //just in case we ever change size
+
         /* Commenting this out since it doesn't provide a nice user experience
         let alert = UIAlertController(title: "New Quiz", message: "How long would you like to make your next quiz? (Up to 30 questions!)", preferredStyle: .alert)
         
@@ -193,13 +195,10 @@ class ViewController: UIViewController {
         
         present(alert, animated: true, completion: nil)
          */ //end user experience removal
-        
-        self.allQuestions.edit(size: self.numQuestionsInBank)
-        self.nextQuestion()
     }
     
     //MARK -- Particle Stuff for Victory Animations
-    func didGetMaxPossibleScore() -> Bool {
+    func setMaxScore() {
         var maxScore = 0
         var tempStreak = 0
         
@@ -208,8 +207,12 @@ class ViewController: UIViewController {
             tempStreak = tempStreak + 1
         }
         
-        print(maxScore)
+        self.maxScore = maxScore
         
+        print(maxScore)
+    }
+    
+    func didGetMaxPossibleScore() -> Bool {
         return (score >= maxScore)
     }
     
